@@ -31,7 +31,7 @@ A comprehensive recruitment platform with AI-powered candidate matching, role-ba
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/your-org/recruitment-platform.git
+git clone [https://github.com/your-org/recruitment-platform.git](https://github.com/AppCrave-Technovations/recruitment-platform.git)
 cd recruitment-platform
 ```
 
