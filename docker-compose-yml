@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: recruitment-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: recruitment_platform
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - recruitment-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: recruitment-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/recruitment_platform?authSource=admin
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      - mongodb
+    networks:
+      - recruitment-network
+
+  # AI Service (Optional microservice)
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: recruitment-ai-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5001
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "5001:5001"
+    networks:
+      - recruitment-network
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: recruitment-frontend
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_URL: http://localhost:5000/api
+      REACT_APP_AI_SERVICE_URL: http://localhost:5001
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - recruitment-network
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7.2-alpine
+    container_name: recruitment-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - recruitment-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  recruitment-network:
+    driver: bridge
+```
